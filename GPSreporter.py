@@ -91,4 +91,4 @@ for track in gpx.tracks:
                     print(p, last_point.time.strftime('last_point is %H:%M:%S'), point.time.strftime('current point %H:%M:%S'), 'traveltime = {0}'.format( traveltime))
                     last_point = point
                     t1 = t2 # prepare for new reading of time difference
-
+        print("ended at: ", searchzip(point))
