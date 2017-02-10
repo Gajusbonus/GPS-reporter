@@ -1,6 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # sudo apt-get install python-pip build-essential python-dev python-wheel
-# sudo pip install geopy gpxpy
+#sudo python3.4 -m pip install gpxpy geopy
+#
 import gpxpy, sys
 from geopy.geocoders import Nominatim
 from math import atan2, cos, sin, sqrt, radians
@@ -9,11 +10,11 @@ import time, datetime
 from datetime import date, timedelta
 
 if len(sys.argv)== 0 :
-    print "this script takes a filename as argument"
+    print( "this script takes a filename as argument")
     sys.exit(2)
 else:
     f1 = sys.argv[1]
-    print "verwerken bestand: ", str(f1)
+    print( "importing file: ", str(f1))
     f = open(f1, 'r')
 
 def calc_distance(origin, destination):
@@ -32,62 +33,64 @@ def calc_distance(origin, destination):
 
 gpx = gpxpy.parse(f)
 
-def zoekadres(point):
+def searchzip(point):
     geolocator = Nominatim()
     place1 = (point.latitude , point.longitude)
     location = geolocator.reverse(place1)
     s = (location.address).encode('iso8859-15')
-    postcode = re.findall(r"\d{4}\s*[A-Z]{2}", s)
-    if postcode == None:
-        postcode = "Onbekende locatie"
+    zipcode = re.findall(r"\d{4}\s*[A-Z]{2}", str(s))
+    if zipcode == None:
+        zipcode = "unknown location"
     else:
-        return postcode[0]
+        return zipcode[0]
+
+def searchaddress(point):
+    geolocator = Nominatim()
+    place1 = (point.latitude , point.longitude)
+    location = geolocator.reverse(place1)
+    s = (location.address).encode('iso8859-15')
+    return str(s)
 
 #show_times
 # todo: print header
+trackno = 0
 for track in gpx.tracks:
-    for segment in track.segments:
+    trackno = trackno + 1
+    print( "track number: ", str(trackno))
+    for segment in track.segments:			#
+        n = len(segment.points)
+        print("number of points: ", n)
         for p, point in enumerate(segment.points):
             if point.time != None:
                 if p == 0:
                     t1 = point.time
                     t2 = point.time
-                    rittijd = datetime.timedelta(seconds=0)   #reset time
-                    postcode = zoekadres(point)
+                    traveltime = datetime.timedelta(seconds=0)   #zet de tijd op nul
+                    zipcode = searchzip(point)
+                    address=searchaddress(point)
                     last_point = point
-                    print p, t1.strftime('We starten op %H:%M:%S'), 'rittijd = ', rittijd, 'vertrek van: ', postcode
+                    print( p, t1.strftime('Starting at %H:%M:%S'), 'address = ', address, 'depart from: ', zipcode)
                 if p == 1:
-                    tijdsverschil = point.time - last_point.time
-                    print "het tijdsverschil is:",  tijdsverschil
-                    rittijd = rittijd + tijdsverschil
-                    print '{0} t1 = {1} tijdsverschil = {2} totaal = ' .format(p, tijdsverschil, rittijd)
-                    #t1 = t2 # zet het klaar om opnieuw een verschil te meten
-                    if tijdsverschil > datetime.timedelta(seconds=300): #er is 5 minuten niet gereden
-                        rittijd = datetime.timedelta(seconds=0)   #zet de tijd op nul
-                        postcode = zoekadres(point)
-                        print p, t1.strftime('We starten op %H:%M:%S'), 'tracktijd = ', rittijd, 'vertrek van: ', postcode
+                    deltatime = point.time - last_point.time
+                    print( "time-difference:",  deltatime)
+                    traveltime = traveltime + deltatime
+                    print( '{0} t1 = {1} deltatime = {2}' .format(p, deltatime, traveltime))
+                    #t1 = t2 # prepare for new reading of time difference
+                    if deltatime > datetime.timedelta(seconds=300): # 5 minutes no driving?
+# improve on: speed = 0.0 twice?
+                        traveltime = datetime.timedelta(seconds=0)   # reset timer
+                        zipcode = searchzip(point)
+                        print( p, t1.strftime('Starting at %H:%M:%S'), 'traveltime = ', traveltime, 'depart from: ', address, zipcode)
                     last_point = point
                 if p > 1:
-                    tijdsverschil = point.time - last_point.time
-                    print "het tijdsverschil is:",  tijdsverschil
-                    if tijdsverschil > datetime.timedelta(seconds=300): #er is 5 minuten niet gereden
-                        tracktijd = datetime.timedelta(seconds=0)   #zet de tijd op nul
-                        postcode = zoekadres(last_point)
-                        print p, t1.strftime('We starten op %H:%M:%S'), 'tracktijd = ', tracktijd, 'vertrek van: ', postcode
-                    
-                    rittijd = rittijd + tijdsverschil
-                    print p, last_point.time.strftime('last_point is %H:%M:%S'), point.time.strftime('dit punt is %H:%M:%S'), #'tracktijd = {0}'.format( tracktijd)
+                    deltatime = point.time - last_point.time
+                    #print( "deltatime:",  deltatime)
+                    if deltatime > datetime.timedelta(seconds=300): # 5 minutes no driving?
+                        traveltime = datetime.timedelta(seconds=0)   # reset timer
+                        zipcode = searchzip(last_point)
+                        print( p, t1.strftime('Starting at %H:%M:%S'), 'traveltime = ', traveltime, 'depart from: ', zipcode)
+                    traveltime = traveltime + deltatime
+                    print(p, last_point.time.strftime('last_point is %H:%M:%S'), point.time.strftime('current point %H:%M:%S'), 'traveltime = {0}'.format( traveltime))
                     last_point = point
-                    t1 = t2 # zet het klaar om opnieuw een verschil te meten
-
-"""
-for track in gpx.tracks:
-    for segment in track.segments:
-        for point in segment.points:
-"""
-#t1 = datetime.strptime(str(point.time), "%Y-%m-%d %H:%M:%S")
-# There are more utility methods and functions...
-# You can manipulate/add/remove tracks, segments, points, waypoints and routes and
-# get the GPX XML file from the resulting object:
-
-#print 'GPX:', gpx.to_xml()
+                    t1 = t2 # prepare for new reading of time difference
+        print("ended at: ", searchzip(point))
