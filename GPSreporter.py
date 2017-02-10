@@ -58,6 +58,8 @@ for track in gpx.tracks:
     trackno = trackno + 1
     print( "track number: ", str(trackno))
     for segment in track.segments:			#
+        n = len(segment.points)
+        print("number of points: ", n)
         for p, point in enumerate(segment.points):
             if point.time != None:
                 if p == 0:
