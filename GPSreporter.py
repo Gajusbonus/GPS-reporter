@@ -48,7 +48,7 @@ def searchaddress(point):
     geolocator = Nominatim()
     place1 = (point.latitude , point.longitude)
     location = geolocator.reverse(place1)
-    s = (location.address).encode('iso8859-15')
+    s = (location.address)    #.encode('iso8859-15')
     return str(s)
 
 def searchzip(point):
