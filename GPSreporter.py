@@ -80,7 +80,7 @@ for track in gpx.tracks:
                     address=searchaddress(point)
                     last_point = point
                     print(t1.strftime('Starting at %H:%M'))    #  %H:%M:%S
-                    print('-->Depart from: ', address, end='\n')
+                    print(p,'-->Depart from: ', address, end='\n')
                 if p == 1:
                     deltatime = point.time - last_point.time
                     if (DEBUG == True):
@@ -94,8 +94,9 @@ for track in gpx.tracks:
                     if deltatime > datetime.timedelta(seconds=300): # 5 minutes no driving? improve on: speed = 0.0 twice?
                         traveltime = datetime.timedelta(seconds=0)   # reset timer
                         zipcode = searchzip(point)
-                        print(t1.strftime('Starting at %H:%M:%S'), '\n', 'traveltime = ', traveltime)
-                        print('-->Depart from: ', address)
+                        print(p,"--> ", point.time.strftime('%H:%M Ended at: '), searchaddress(point), searchzip(point), end='\n')   
+                        print("   Distance: {:.2f}" .format( distance), " km, ", 'Traveltime = {0}'.format( traveltime), end='\n\n') # check is this is reset
+
                     last_point = point
                 if p > 1:
                     deltatime = point.time - last_point.time
@@ -104,16 +105,16 @@ for track in gpx.tracks:
                         traveltime = datetime.timedelta(seconds=0)   # reset timer
                         distance = distance + calc_distance(last_point, point)
                         zipcode = searchzip(last_point)
-                        if (DEBUG == True):
-                            print("distance: ", distance)   # check is this is reset.
-                            print( p, t1.strftime('Starting at %H:%M:%S'), '\n', 'traveltime = ', traveltime )
-                            print('-->Depart from: ', zipcode)
+                        print(p,"Break at ", point.time.strftime('%H:%M '), searchaddress(point), searchzip(point), end='\n')
+                        print("   Distance: {:.2f}" .format( distance), " km, ", 'Traveltime = {0}'.format( traveltime), end='\n\n') # check is this is reset
+                    #elif (point.speed!=0.0 and last_point.speed==0.0):
+                    #    print(p,point.speed, searchaddress(point))
                     traveltime = traveltime + deltatime
                     distance = distance + calc_distance(last_point, point)
                     if (DEBUG == True):
                         print(p, last_point.time.strftime('last_point is %H:%M:%S'), point.time.strftime('current point %H:%M:%S'), 'traveltime = {0}'.format( traveltime))
                     last_point = point
                     t1 = t2 # prepare for new reading of time difference
-        print(point.time.strftime('Ending at %H:%M'))
-        print("-->Ended at: ", searchaddress(point), searchzip(point), end='\n')   
-        print("   Distance: {:.2f}" .format( distance), " km, ", 'Traveltime = {0}'.format( traveltime), end='\n\n')   # check is this is reset
+        #print(point.time.strftime('Ending at %H:%M'))
+        print(p,"--> ", point.time.strftime('%H:%M Ended at: '), searchaddress(point), searchzip(point), end='\n')   
+        print("   Distance: {:.2f}" .format( distance), " km, ", 'Traveltime = {0}'.format( traveltime), end='\n\n') # check is this is reset
